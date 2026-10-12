@@ -1,3 +1,6 @@
+# Coolify parses this file during builds without runtime-only variables.
+# Empty password fallback permits parsing only; PostgreSQL refuses initial
+# startup without a real runtime password. Do not enable trust authentication.
 # Private BrainOutside deployment: access through an SSH tunnel.
 # Do not attach a public domain to this resource.
 # Back up brain-state together with PostgreSQL; it contains encryption keys.
@@ -14,15 +17,15 @@ x-app: &app
       required: false
   environment: &app-env
     DJANGO_SETTINGS_MODULE: config.settings.prod
-    DATABASE_URL: postgres://brain:${POSTGRES_PASSWORD:?set in Coolify}@postgres:5432/brain
+    DATABASE_URL: postgres://brain:${POSTGRES_PASSWORD:-}@postgres:5432/brain
     REDIS_URL: redis://redis:6379/0
     BRAIN_REPO_DIR: /data/brain-repo
     BRAIN_VIEWS_DIR: /data/brain-views
     BRAIN_STATE_DIR: /data/state
-    ALLOWED_HOSTS: ${ALLOWED_HOSTS:?set in Coolify}
-    SECURE_SSL_REDIRECT_ENABLED: ${SECURE_SSL_REDIRECT_ENABLED:?set in Coolify}
-    CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:?set in Coolify}
-    PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?set in Coolify}
+    ALLOWED_HOSTS: ${ALLOWED_HOSTS:-127.0.0.1,localhost}
+    SECURE_SSL_REDIRECT_ENABLED: ${SECURE_SSL_REDIRECT_ENABLED:-0}
+    CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://127.0.0.1:18080}
+    PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://127.0.0.1:18080}
   volumes:
     - brain-repo:/data/brain-repo
     - brain-views:/data/brain-views
@@ -87,7 +90,7 @@ services:
     environment:
       POSTGRES_DB: brain
       POSTGRES_USER: brain
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in Coolify}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
